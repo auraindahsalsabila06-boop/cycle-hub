@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Hub - Penyewaan Sepeda UNNES</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            teal: '#0d9488',
+                            darkteal: '#0f766e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet JS Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        #leaflet-map { height: 350px; width: 100%; border-radius: 0.75rem; z-index: 1; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-emerald-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('hero')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-teal flex items-center justify-center text-white shadow-md shadow-emerald-200">
+                        <i class="fa-solid fa-bicycle text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-brand-700 to-brand-teal bg-clip-text text-transparent">Cycle Hub</span>
+                        <span class="block text-[10px] font-medium text-emerald-600 -mt-1">Garuda UNNES</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
+                    <button onclick="navigateTo('hero')" class="hover:text-brand-600 transition">Beranda</button>
+                    <button onclick="navigateTo('armada')" class="hover:text-brand-600 transition">Tarif & Variasi Sepeda</button>
+                    <button onclick="navigateTo('booking')" class="hover:text-brand-600 transition">Pemesanan</button>
+                    <button onclick="navigateTo('status-gps')" class="hover:text-brand-600 transition flex items-center gap-1">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Timer & GPS
+                    </button>
+                    <button onclick="navigateTo('ulasan')" class="hover:text-brand-600 transition">Ulasan</button>
+                    
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-slate-600 hover:text-slate-900 focus:outline-none p-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="navigateTo('hero')" class="block w-full text-left py-2 px-3 rounded text-slate-700 hover:bg-emerald-50">Beranda</button>
+            <button onclick="navigateTo('armada')" class="block w-full text-left py-2 px-3 rounded text-slate-700 hover:bg-emerald-50">Tarif & Variasi Sepeda</button>
+            <button onclick="navigateTo('booking')" class="block w-full text-left py-2 px-3 rounded text-slate-700 hover:bg-emerald-50">Pemesanan</button>
+            <button onclick="navigateTo('status-gps')" class="block w-full text-left py-2 px-3 rounded text-slate-700 hover:bg-emerald-50">Status Sewa & GPS</button>
+            <button onclick="navigateTo('ulasan')" class="block w-full text-left py-2 px-3 rounded text-slate-700 hover:bg-emerald-50">Ulasan</button>
+            
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow">
+
+        <!-- SECTION 1: HERO & INFORMATION -->
+        <section id="hero" class="relative bg-gradient-to-b from-emerald-50/60 via-white to-slate-50 py-12 md:py-20 border-b border-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    <div class="lg:col-span-7 space-y-6">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/80 text-emerald-800 text-xs font-semibold">
+                            <i class="fa-solid fa-leaf text-emerald-600"></i> Solusi Transportasi & Rekreasi Ramah Lingkungan UNNES
+                        </div>
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight">
+                            Jelajahi Kampus Lebih Praktis Bersama <span class="text-brand-600 underline decoration-emerald-300">Cycle Hub</span>
+                        </h1>
+                        <p class="text-slate-600 text-base md:text-lg leading-relaxed">
+                            Layanan penyewaan sepeda resmi kawasan Depan Garuda UNNES. Solusi bersepeda tanpa ribet, perawatan terjamin, waktu fleksibel, dan dilengkapi GPS tracking modern.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="navigateTo('booking')" class="px-6 py-3.5 rounded-xl bg-brand-600 text-white font-semibold shadow-lg shadow-emerald-600/30 hover:bg-brand-700 transition transform active:scale-95 flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-check"></i> Pesan Sepeda Sekarang
+                            </button>
+                            <button onclick="navigateTo('armada')" class="px-6 py-3.5 rounded-xl bg-white text-slate-700 font-semibold border border-slate-300 hover:bg-slate-50 transition flex items-center gap-2">
+                                <i class="fa-solid fa-tags"></i> Lihat Tarif & Variasi Sepeda
+                            </button>
+                        </div>
+
+                        <!-- Key Highlights -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-200/80">
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                <div class="text-xs text-slate-500">Total Unit</div>
+                                <div class="text-lg font-bold text-emerald-700">21 Sepeda</div>
+                                <div class="text-[11px] text-slate-400">Pria, Wanita & Tandem</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                <div class="text-xs text-slate-500">Bonus Setiap Sewa</div>
+                                <div class="text-lg font-bold text-emerald-700">1 Botol Air</div>
+                                <div class="text-[11px] text-slate-400">Gratis Mineral 330ml</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm col-span-2 sm:col-span-1">
+                                <div class="text-xs text-slate-500">Program Loyalitas</div>
+                                <div class="text-lg font-bold text-emerald-700">Sewa Ke-11 Gratis</div>
+                                <div class="text-[11px] text-slate-400">Dari 10 Hari Berbeda</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Info Card -->
+                    <div class="lg:col-span-5">
+                        <div class="bg-gradient-to-br from-emerald-800 to-emerald-900 text-white p-6 rounded-2xl shadow-xl space-y-5 relative overflow-hidden">
+                            <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+                            
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-bold flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-info text-emerald-400"></i> Info Operasional Hub
+                                </h3>
+                                <span class="px-2.5 py-1 bg-emerald-700/80 text-emerald-200 text-xs rounded-full border border-emerald-500/30">
+                                    <i class="fa-solid fa-location-dot text-emerald-400 mr-1"></i> Garuda UNNES
+                                </span>
+                            </div>
+
+                            <div class="space-y-3 text-sm">
+                                <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10">
+                                    <div class="text-xs text-emerald-300 font-medium">Jam Operasional:</div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="font-medium">Senin - Jumat:</span>
+                                        <span class="font-bold text-emerald-200">15.00 - 21.00 WIB</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="font-medium">Sabtu - Minggu:</span>
+                                        <span class="font-bold text-emerald-200">06.00 - 19.00 WIB</span>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 space-y-1">
+                                    <div class="text-xs text-emerald-300 font-medium">Visi Utama:</div>
+                                    <p class="text-xs text-slate-200 leading-relaxed">
+                                        Menjadi layanan penyewaan sepeda berbasis website yang praktis, terjangkau, dan mudah diakses oleh mahasiswa UNNES serta masyarakat sekitar.
+                                    </p>
+                                </div>
+
+                                <div class="text-xs text-emerald-200/80 flex items-center gap-2 pt-1">
+                                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                                    <span>Jaminan sewa: Penyerahan KTM / KTP Asli saat pengambilan.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: BICYCLE CATALOG & PRICING -->
+        <section id="armada" class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Tarif & Variasi Sepeda</h2>
+                    <p class="text-slate-600 text-sm mt-2">Daftar variasi sepeda yang dirawat secara berkala dengan kepastian harga transparan sebelum memesan.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Sepeda Pria -->
+                    <div class="border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all bg-white flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">Reguler (Laki-Laki)</span>
+                                <span id="stock-pria" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">7 Unit Tersedia</span>
+                            </div>
+                            <div class="h-32 bg-blue-50/50 rounded-xl flex items-center justify-center text-blue-500 mb-4">
+                                <i class="fa-solid fa-bicycle text-6xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">Sepeda Pria</h3>
+                            <p class="text-xs text-slate-500 mt-1">Frame kokoh ergonomis, cocok untuk postur pria dewasa/mahasiswa.</p>
+
+                            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                                <div class="flex justify-between"><span>30 Menit:</span> <span class="font-semibold text-slate-800">Rp 8.000</span></div>
+                                <div class="flex justify-between"><span>1 Jam:</span> <span class="font-semibold text-slate-800">Rp 12.000</span></div>
+                                <div class="flex justify-between"><span>2 Jam:</span> <span class="font-semibold text-slate-800">Rp 20.000</span></div>
+                                <div class="flex justify-between"><span>3 Jam:</span> <span class="font-semibold text-slate-800">Rp 27.000</span></div>
+                                <div class="flex justify-between"><span>4 Jam:</span> <span class="font-semibold text-slate-800">Rp 34.000</span></div>
+                            </div>
+                        </div>
+                        <button onclick="selectBikeType('pria')" class="mt-6 w-full py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-brand-600 transition text-sm">
+                            Pilih Sepeda Pria
+                        </button>
+                    </div>
+
+                    <!-- Sepeda Wanita -->
+                    <div class="border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all bg-white flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="px-3 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold">Reguler (Perempuan)</span>
+                                <span id="stock-wanita" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">7 Unit Tersedia</span>
+                            </div>
+                            <div class="h-32 bg-pink-50/50 rounded-xl flex items-center justify-center text-pink-500 mb-4">
+                                <i class="fa-solid fa-bicycle text-6xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">Sepeda Wanita</h3>
+                            <p class="text-xs text-slate-500 mt-1">Desain frame step-through rendah, nyaman untuk mahasiswi & bersepeda santai.</p>
+
+                            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                                <div class="flex justify-between"><span>30 Menit:</span> <span class="font-semibold text-slate-800">Rp 8.000</span></div>
+                                <div class="flex justify-between"><span>1 Jam:</span> <span class="font-semibold text-slate-800">Rp 12.000</span></div>
+                                <div class="flex justify-between"><span>2 Jam:</span> <span class="font-semibold text-slate-800">Rp 20.000</span></div>
+                                <div class="flex justify-between"><span>3 Jam:</span> <span class="font-semibold text-slate-800">Rp 27.000</span></div>
+                                <div class="flex justify-between"><span>4 Jam:</span> <span class="font-semibold text-slate-800">Rp 34.000</span></div>
+                            </div>
+                        </div>
+                        <button onclick="selectBikeType('wanita')" class="mt-6 w-full py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-brand-600 transition text-sm">
+                            Pilih Sepeda Wanita
+                        </button>
+                    </div>
+
+                    <!-- Sepeda Tandem -->
+                    <div class="border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all bg-white flex flex-col justify-between border-brand-500/30 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULER DUA ORANG</div>
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold">Tandem (2 Orang)</span>
+                                <span id="stock-tandem" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">7 Unit Tersedia</span>
+                            </div>
+                            <div class="h-32 bg-purple-50/50 rounded-xl flex items-center justify-center text-purple-600 mb-4">
+                                <i class="fa-solid fa-people-arrows text-5xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">Sepeda Tandem</h3>
+                            <p class="text-xs text-slate-500 mt-1">Gowes berpasangan / bersama teman untuk rekreasi seru di UNNES.</p>
+
+                            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                                <div class="flex justify-between"><span>30 Menit:</span> <span class="font-semibold text-slate-800">Rp 12.000</span></div>
+                                <div class="flex justify-between"><span>1 Jam:</span> <span class="font-semibold text-slate-800">Rp 18.000</span></div>
+                                <div class="flex justify-between"><span>2 Jam:</span> <span class="font-semibold text-slate-800">Rp 30.000</span></div>
+                                <div class="flex justify-between"><span>3 Jam:</span> <span class="font-semibold text-slate-800">Rp 42.000</span></div>
+                                <div class="flex justify-between"><span>4 Jam:</span> <span class="font-semibold text-slate-800">Rp 52.000</span></div>
+                            </div>
+                        </div>
+                        <button onclick="selectBikeType('tandem')" class="mt-6 w-full py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition text-sm shadow-md">
+                            Pilih Sepeda Tandem
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: BOOKING FORM -->
+        <section id="booking" class="py-12 bg-slate-50 border-t border-slate-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-brand-700 to-brand-teal p-6 text-white">
+                        <h2 class="text-xl sm:text-2xl font-bold">Formulir Pemesanan Cycle Hub</h2>
+                        <p class="text-xs sm:text-sm text-emerald-100 mt-1">Lengkapi data diri, jumlah unit, metode pembayaran, dan jadwal penyewaan Anda.</p>
+                    </div>
+
+                    <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="p-6 sm:p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nama Utama Pemesan -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Nama Pemesan Utama *</label>
+                                <input type="text" id="cust-name" required placeholder="Contoh: Budi Santoso" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+
+                            <!-- Nomor WhatsApp -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Nomor HP / WA *</label>
+                                <input type="tel" id="cust-phone" required placeholder="081234567890" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+
+                            <!-- Jenis Sepeda -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Variasi Sepeda *</label>
+                                <select id="bike-type" onchange="calculatePrice()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm bg-white">
+                                    <option value="pria">Sepeda Pria (7 Unit Tersedia)</option>
+                                    <option value="wanita">Sepeda Wanita (7 Unit Tersedia)</option>
+                                    <option value="tandem">Sepeda Tandem (7 Unit Tersedia)</option>
+                                </select>
+                            </div>
+
+                            <!-- Jumlah Sepeda (Quantity) -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Jumlah Sepeda *</label>
+                                <select id="bike-qty" onchange="updateAdditionalRentersFields(); calculatePrice();" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm bg-white">
+                                    <option value="1">1 Unit</option>
+                                    <option value="2">2 Unit</option>
+                                    <option value="3">3 Unit</option>
+                                    <option value="4">4 Unit</option>
+                                    <option value="5">5 Unit</option>
+                                </select>
+                            </div>
+
+                            <!-- Dynamic Additional Renter Names (Shown when qty > 1) -->
+                            <div id="additional-renters-container" class="md:col-span-2 hidden space-y-3 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                                <label class="block text-xs font-bold text-emerald-800 uppercase">
+                                    <i class="fa-solid fa-users mr-1"></i> Nama Pemesan Lain / Pengguna Tambahan:
+                                </label>
+                                <div id="additional-renters-inputs" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Dynamic Inputs Inserted Here -->
+                                </div>
+                            </div>
+
+                            <!-- Durasi Sewa -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Durasi Sewa *</label>
+                                <select id="rent-duration" onchange="calculatePrice()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm bg-white">
+                                    <option value="30m">30 Menit</option>
+                                    <option value="1h" selected>1 Jam</option>
+                                    <option value="2h">2 Jam</option>
+                                    <option value="3h">3 Jam</option>
+                                    <option value="4h">4 Jam</option>
+                                </select>
+                            </div>
+
+                            <!-- Tanggal Sewa -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Tanggal Penyewaan *</label>
+                                <input type="date" id="rent-date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+
+                            <!-- Jam Mulai -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Jam Mulai Penyewaan *</label>
+                                <input type="time" id="rent-time" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+
+                            <!-- Identitas Jaminan -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Jaminan Identitas Fisik *</label>
+                                <div class="flex gap-4 text-sm pt-1">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="guarantee" value="KTM" checked class="text-brand-600 focus:ring-brand-500"> KTM Asli
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="guarantee" value="KTP" class="text-brand-600 focus:ring-brand-500"> KTP Asli
+                                    </label>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">*Diserahkan saat pengambilan unit di Garuda UNNES.</p>
+                            </div>
+
+                            <!-- Metode Pembayaran -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Metode Pembayaran *</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="border rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:border-brand-500 transition bg-white" onclick="togglePaymentMethod('qris')">
+                                        <input type="radio" name="payment-method" value="qris" checked class="text-brand-600 focus:ring-brand-500">
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                                                <i class="fa-solid fa-qrcode text-emerald-600"></i> QRIS (Instan)
+                                            </div>
+                                            
+                                        </div>
+                                    </label>
+                                    <label class="border rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:border-brand-500 transition bg-white" onclick="togglePaymentMethod('cash')">
+                                        <input type="radio" name="payment-method" value="cash" class="text-brand-600 focus:ring-brand-500">
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                                                <i class="fa-solid fa-money-bill-wave text-emerald-600"></i> Cash / Tunai
+                                            </div>
+                                            <div class="text-[11px] text-slate-500">Bayar langsung di kasir pos sewa</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculation & Summary Box -->
+                        <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div>
+                                <span class="text-xs text-emerald-800 font-medium">Total Biaya Penyewaan:</span>
+                                <div id="calc-price-display" class="text-2xl font-extrabold text-emerald-700">Rp 12.000</div>
+                                <div class="text-[11px] text-emerald-600 mt-0.5">
+                                    <i class="fa-solid fa-bottle-water text-emerald-500 mr-1"></i> Termasuk Bonus <span id="calc-water-qty">1</span> Botol Air Mineral (330ml)
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition shadow-md shadow-emerald-600/30">
+                                Konfirmasi & Dapatkan Kode Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Booking Result Card & Payment Modal (Hidden Initially) -->
+                <div id="booking-success-card" class="hidden mt-6 bg-white rounded-2xl p-6 border-2 border-emerald-500 shadow-lg">
+                    <div class="text-center space-y-4">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900">Pemesanan Berhasil Dibuat!</h3>
+                        <p class="text-xs text-slate-600">Simpan Kode Booking Anda dan selesaikan pembayaran sesuai petunjuk di bawah.</p>
+                        
+                        <div class="bg-slate-100 p-4 rounded-xl inline-block border border-slate-200">
+                            <span class="text-xs text-slate-500 block">KODE BOOKING ANDA:</span>
+                            <span id="res-booking-code" class="text-3xl font-mono font-bold text-brand-700 tracking-wider">CH-89234</span>
+                        </div>
+
+                        <!-- QRIS Section (Display if QRIS chosen) -->
+                        <div id="res-qris-container" class="bg-emerald-50/80 p-5 rounded-2xl border border-emerald-200 max-w-md mx-auto space-y-3">
+                            <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
+                                <i class="fa-solid fa-qrcode text-lg"></i> Scan QRIS Cycle Hub UNNES
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 inline-block shadow-sm">
+                                <!-- SVG Mock QRIS Code -->
+                                <svg class="w-44 h-44 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="100" height="100" fill="white"/>
+                                    <!-- Corners -->
+                                    <rect x="5" y="5" width="25" height="25" fill="#0f172a"/>
+                                    <rect x="9" y="9" width="17" height="17" fill="white"/>
+                                    <rect x="13" y="13" width="9" height="9" fill="#0f172a"/>
+                                    
+                                    <rect x="70" y="5" width="25" height="25" fill="#0f172a"/>
+                                    <rect x="74" y="9" width="17" height="17" fill="white"/>
+                                    <rect x="78" y="13" width="9" height="9" fill="#0f172a"/>
+                                    
+                                    <rect x="5" y="70" width="25" height="25" fill="#0f172a"/>
+                                    <rect x="9" y="74" width="17" height="17" fill="white"/>
+                                    <rect x="13" y="78" width="9" height="9" fill="#0f172a"/>
+                                    
+                                    <!-- Simulated Pattern -->
+                                    <rect x="35" y="10" width="8" height="8" fill="#16a34a"/>
+                                    <rect x="48" y="10" width="12" height="6" fill="#0f172a"/>
+                                    <rect x="35" y="25" width="25" height="6" fill="#0f172a"/>
+                                    <rect x="10" y="35" width="15" height="8" fill="#0f172a"/>
+                                    <rect x="30" y="35" width="10" height="20" fill="#16a34a"/>
+                                    <rect x="45" y="35" width="20" height="10" fill="#0f172a"/>
+                                    <rect x="70" y="35" width="25" height="10" fill="#0f172a"/>
+                                    <rect x="50" y="50" width="15" height="15" fill="#16a34a"/>
+                                    <rect x="70" y="50" width="20" height="8" fill="#0f172a"/>
+                                    <rect x="35" y="70" width="12" height="12" fill="#0f172a"/>
+                                    <rect x="52" y="70" width="18" height="6" fill="#16a34a"/>
+                                    <rect x="75" y="70" width="20" height="20" fill="#0f172a"/>
+                                    <rect x="35" y="86" width="25" height="8" fill="#0f172a"/>
+                                </svg>
+                                <div class="text-[10px] font-bold text-slate-500 uppercase mt-1">NMH: CYCLE HUB UNNES</div>
+                            </div>
+                            <p class="text-xs text-emerald-700">
+                                Pindai QRIS di atas menggunakan M-Banking / E-Wallet. Total Bayar: <strong id="res-qris-amount">Rp 12.000</strong>
+                            </p>
+                        </div>
+
+                        <!-- Cash Instructions Section (Display if Cash chosen) -->
+                        <div id="res-cash-container" class="hidden bg-amber-50 p-4 rounded-2xl border border-amber-200 max-w-md mx-auto space-y-2 text-left text-xs text-amber-900">
+                            <div class="font-bold text-amber-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-holding-dollar text-base"></i> Petunjuk Pembayaran Tunai (Cash):
+                            </div>
+                            <ol class="list-decimal list-inside space-y-1 text-amber-800/90">
+                                <li>Datang ke pos Cycle Hub di Kawasan Depan Garuda UNNES.</li>
+                                <li>Tunjukkan Kode Booking <strong id="res-cash-code-inline">CH-89234</strong> kepada petugas (Alghi/Aura).</li>
+                                <li>Serahkan uang tunai sebesar <strong id="res-cash-amount">Rp 12.000</strong> beserta KTM/KTP asli jaminan.</li>
+                            </ol>
+                        </div>
+
+                        <!-- Summary Table -->
+                        <div class="text-xs text-slate-600 max-w-md mx-auto space-y-1 text-left bg-slate-50 p-4 rounded-xl border">
+                            <div><strong>Pemesan Utama:</strong> <span id="res-cust-name">-</span></div>
+                            <div id="res-other-renters-row" class="hidden"><strong>Pemesan Tambahan:</strong> <span id="res-other-renters">-</span></div>
+                            <div><strong>Variasi & Qty:</strong> <span id="res-bike-type">-</span> (<span id="res-qty">1</span> Unit)</div>
+                            <div><strong>Jadwal Sewa:</strong> <span id="res-schedule">-</span></div>
+                            <div><strong>Durasi:</strong> <span id="res-duration">-</span></div>
+                            <div><strong>Metode Pembayaran:</strong> <span id="res-payment-method" class="font-bold text-emerald-700 uppercase">-</span></div>
+                        </div>
+
+                        <div class="pt-2 flex flex-wrap justify-center gap-3">
+                            <button onclick="checkAndSetupTimerFromBooking()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-xs hover:bg-brand-700 transition shadow-sm">
+                                <i class="fa-solid fa-clock mr-1"></i> Cek Status Timer & GPS
+                            </button>
+                            <button onclick="copyBookingCode()" class="px-4 py-2.5 rounded-xl bg-slate-200 text-slate-700 font-medium text-xs hover:bg-slate-300 transition">
+                                <i class="fa-regular fa-copy mr-1"></i> Salin Kode
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 4: ACTIVE TIMER & GPS TRACKER SIMULATION -->
+        <section id="status-gps" class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto mb-8">
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">Real-Time Tracker & Timer</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">Status Sewa, Timer Otomatis & GPS</h2>
+                    <p class="text-slate-600 text-sm mt-1">Timer akan otomatis berjalan aktif saat waktu sewa tiba sesuai jadwal pesanan Anda.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Timer Controls Card -->
+                    <div class="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-6">
+                        <div>
+                            <div class="flex justify-between items-center pb-4 border-b border-slate-200">
+                                <div>
+                                    <span class="text-xs text-slate-500">Kode Sewa Aktif:</span>
+                                    <div id="active-timer-code" class="font-mono font-bold text-slate-800 text-lg">CH-89234</div>
+                                </div>
+                                <span id="timer-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                    MENUNGGU WAKTU SEWA
+                                </span>
+                            </div>
+
+                            <!-- Scheduled Info Box -->
+                            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] text-blue-600 block uppercase font-bold">Jadwal Pesanan Anda:</span>
+                                    <span id="timer-scheduled-time-display" class="font-semibold">25 Okt 2026, Jam 15:00 WIB</span>
+                                </div>
+                                <i class="fa-solid fa-calendar-clock text-blue-500 text-xl"></i>
+                            </div>
+
+                            <!-- Big Countdown / Timer Box -->
+                            <div class="my-6 text-center py-6 bg-white rounded-xl border border-slate-200 shadow-inner">
+                                <div id="timer-box-label" class="text-xs text-slate-400 uppercase font-semibold mb-1">Status Penyewaan</div>
+                                <div id="timer-display" class="text-3xl sm:text-4xl font-mono font-bold text-slate-700 tracking-wider">
+                                    00:00:00
+                                </div>
+                                <p id="timer-sub-text" class="text-[11px] text-slate-500 mt-2">
+                                    Timer sisa sewa aktif otomatis saat waktu sewa tiba.
+                                </p>
+                                <p id="timer-warning-msg" class="text-[11px] text-amber-600 font-bold mt-2 hidden">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Peringatan: Waktu sewa tinggal kurang dari 10 menit!
+                                </p>
+                            </div>
+
+                            <!-- Manual Override / Simulation Controls -->
+                            <div class="space-y-3">
+                                <div class="text-xs font-bold text-slate-600 uppercase">Simulasi Kontrol Timer:</div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="forceStartTimerNow()" class="py-2 px-3 bg-brand-600 text-white rounded-lg text-xs font-medium hover:bg-brand-700 transition">
+                                        <i class="fa-solid fa-play mr-1"></i> Mulai Sekarang
+                                    </button>
+                                    <button onclick="addExtraTime(10)" class="py-2 px-3 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-medium hover:bg-emerald-200 transition">
+                                        +10 Mnt
+                                    </button>
+                                    <button onclick="resetTimerSimulation()" class="py-2 px-3 bg-rose-100 text-rose-700 rounded-lg text-xs font-medium hover:bg-rose-200 transition">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rule Info -->
+                        <div class="pt-4 border-t border-slate-200 text-[11px] text-slate-500 space-y-1">
+                            <div>• <strong>Toleransi Keterlambatan:</strong> Maksimal 10 menit.</div>
+                            <div>• <strong>Denda Keterlambatan:</strong> Rp 4.000 / 10 menit berikutnya.</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive GPS Map Card -->
+                    <div class="lg:col-span-7 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-location-dot text-rose-500 animate-bounce"></i> Pelacakan GPS Sepeda Real-Time
+                                </h3>
+                                <p class="text-xs text-slate-500">Kawasan UNNES (Depan Garuda & Kampus)</p>
+                            </div>
+                            <button onclick="simulateGPSMove()" class="text-xs px-3 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i> Update Posisi GPS
+                            </button>
+                        </div>
+
+                        <!-- Map Container -->
+                        <div id="leaflet-map" class="shadow-md"></div>
+
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <span class="text-slate-400 block">Koordinat Saat Ini:</span>
+                                <span id="gps-coords-display" class="font-mono text-slate-700 font-semibold">-7.0485, 110.4072</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <span class="text-slate-400 block">Status Perangkat:</span>
+                                <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-signal mr-1"></i> GPS Aktif & Terhubung</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: REVIEWS & REVIEWS FORM -->
+        <section id="ulasan" class="py-12 bg-slate-50 border-t border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    <!-- Form Kirim Ulasan -->
+                    <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900">Beri Ulasan Pengalaman Sewa</h3>
+                        <p class="text-xs text-slate-500">Bagikan kesan Anda selama menggunakan sepeda Cycle Hub UNNES.</p>
+
+                        <form id="review-form" onsubmit="handleReviewSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                                <input type="text" id="rev-name" required placeholder="Contoh: Rina Mahasiswi" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Penilaian (Bintang 1 - 5)</label>
+                                <select id="rev-rating" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+                                    <option value="5">⭐⭐⭐⭐⭐ (5/5) Sangat Puas</option>
+                                    <option value="4">⭐⭐⭐⭐ (4/5) Bagus</option>
+                                    <option value="3">⭐⭐⭐ (3/5) Cukup</option>
+                                    <option value="2">⭐⭐ (2/5) Kurang</option>
+                                    <option value="1">⭐ (1/5) Buruk</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Ulasan Pengalaman</label>
+                                <textarea id="rev-comment" required rows="3" placeholder="Sepeda terawat, respons admin cepat..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-brand-600 transition text-sm">
+                                Kirim Ulasan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Feed Ulasan -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-slate-900">Ulasan Pelanggan</h3>
+                            <span class="text-xs text-slate-500">Total <span id="review-count">2</span> Ulasan</span>
+                        </div>
+
+                        <div id="reviews-container" class="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Sample Review 1 -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-slate-800 text-sm">Ahmad Fauzi</span>
+                                    <span class="text-amber-400 text-xs">⭐⭐⭐⭐⭐</span>
+                                </div>
+                                <p class="text-xs text-slate-600">"Sangat praktis! Sewa sepeda pria jam 4 sore buat keliling Garuda UNNES. Sepeda mulus dan dapet bonus air mineral."</p>
+                                <span class="text-[10px] text-slate-400">2 Jam yang lalu</span>
+                            </div>
+
+                            <!-- Sample Review 2 -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-slate-800 text-sm">Siti Nurhaliza</span>
+                                    <span class="text-amber-400 text-xs">⭐⭐⭐⭐⭐</span>
+                                </div>
+                                <p class="text-xs text-slate-600">"Sewa sepeda tandem sama temen kost. Prosesnya gampang lewat website, bayar pke QRIS serahin KTM ke Alghi/Aura."</p>
+                                <span class="text-[10px] text-slate-400">Kemarin</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        
+
+                    
+            </div>
+        </section>
+
+    </main>
+
+    <!-- IN-WEBSITE LIVE CHAT WIDGET (ADMIN AURA) -->
+    <div id="chat-widget" class="fixed bottom-5 right-5 z-50">
+        <!-- Chat Toggle Button -->
+        <button onclick="toggleChatWindow()" class="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-teal text-white flex items-center justify-center shadow-xl hover:scale-105 transition transform active:scale-95 relative">
+            <i class="fa-solid fa-comments text-2xl"></i>
+            <span class="absolute top-0 right-0 h-3.5 w-3.5 bg-rose-500 rounded-full border-2 border-white"></span>
+        </button>
+
+        <!-- Chat Window (Hidden Initially) -->
+        <div id="chat-window" class="hidden absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[420px]">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-brand-700 to-brand-teal p-3.5 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
+                        A
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold">Admin Aura (CS Cycle Hub)</div>
+                        <div class="text-[10px] text-emerald-100 flex items-center gap-1">
+                            <span class="h-1.5 w-1.5 bg-emerald-300 rounded-full"></span> Online & Siap Membantu
+                        </div>
+                    </div>
+                </div>
+                <button onclick="toggleChatWindow()" class="text-white/80 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Messages Body -->
+            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-3 text-xs custom-scrollbar bg-slate-50">
+                <div class="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-200 text-slate-700 max-w-[85%] shadow-sm">
+                    Halo! Saya Aura dari Customer Service Cycle Hub. Ada yang bisa dibantu terkait penyewaan atau lokasi sepeda? 😊
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <form onsubmit="handleSendChatMessage(event)" class="p-2.5 bg-white border-t border-slate-200 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Tulis pesan..." class="flex-grow px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-brand-500">
+                <button type="submit" class="px-3.5 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold hover:bg-brand-700 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 text-slate-400 py-8 text-xs border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+            <div class="flex items-center justify-center gap-2 text-white font-bold text-base">
+                <i class="fa-solid fa-bicycle text-brand-500"></i> Cycle Hub UNNES
+            </div>
+            <p class="max-w-md mx-auto text-slate-500">
+                Layanan Penyewaan Sepeda Berbasis Website Khas Kampus UNNES (Kawasan Depan Garuda UNNES).
+            </p>
+            <div class="text-slate-600">
+                © 2026 Cycle Hub Team (Maulida, Aura, Alghi, & Tim IT). All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // GLOBAL STATE
+        let leafletMap = null;
+        let bikeMarker = null;
+        let activeTimerInterval = null;
+        let scheduledStartTimestamp = null;
+        let rentalDurationSeconds = 3600; // Default 1 hour
+        let currentBikeCoords = [-7.0485, 110.4072]; // Garuda UNNES area
+        let currentBookingData = null;
+
+        const PRICING = {
+            pria: { '30m': 8000, '1h': 12000, '2h': 20000, '3h': 27000, '4h': 34000 },
+            wanita: { '30m': 8000, '1h': 12000, '2h': 20000, '3h': 27000, '4h': 34000 },
+            tandem: { '30m': 12000, '1h': 18000, '2h': 30000, '3h': 42000, '4h': 52000 }
+        };
+
+        // INITIALIZATION
+        window.onload = function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('rent-date').value = today;
+            
+            // Set default time to current time
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('rent-time').value = `${hours}:${minutes}`;
+
+            // Initialize Map
+            initLeafletMap();
+
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+                document.getElementById('mobile-menu').classList.toggle('hidden');
+            });
+
+            calculatePrice();
+        };
+
+        // NAVIGATION HELPER
+        function navigateTo(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        // PRICE CALCULATOR & WATER QTY UPDATE
+        function calculatePrice() {
+            const type = document.getElementById('bike-type').value;
+            const duration = document.getElementById('rent-duration').value;
+            const qty = parseInt(document.getElementById('bike-qty').value) || 1;
+            
+            const unitPrice = PRICING[type][duration] || 12000;
+            const totalPrice = unitPrice * qty;
+
+            document.getElementById('calc-price-display').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+            document.getElementById('calc-water-qty').innerText = qty;
+
+            return totalPrice;
+        }
+
+        function selectBikeType(type) {
+            document.getElementById('bike-type').value = type;
+            calculatePrice();
+            navigateTo('booking');
+        }
+
+        // DYNAMIC ADDITIONAL RENTERS FIELDS
+        function updateAdditionalRentersFields() {
+            const qty = parseInt(document.getElementById('bike-qty').value) || 1;
+            const container = document.getElementById('additional-renters-container');
+            const inputsWrapper = document.getElementById('additional-renters-inputs');
+
+            if (qty > 1) {
+                container.classList.remove('hidden');
+                inputsWrapper.innerHTML = '';
+
+                for (let i = 2; i <= qty; i++) {
+                    const inputFieldHtml = `
+                        <div>
+                            <input type="text" id="extra-renter-${i}" required placeholder="Nama Pengguna Sepeda #${i}" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 text-xs bg-white">
+                        </div>
+                    `;
+                    inputsWrapper.insertAdjacentHTML('beforeend', inputFieldHtml);
+                }
+            } else {
+                container.classList.add('hidden');
+                inputsWrapper.innerHTML = '';
+            }
+        }
+
+        // PAYMENT METHOD TOGGLE
+        function togglePaymentMethod(method) {
+            // Updated dynamically in form handler
+        }
+
+        // BOOKING FORM SUBMIT HANDLER
+        function handleBookingSubmit(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const type = document.getElementById('bike-type').value;
+            const qty = parseInt(document.getElementById('bike-qty').value) || 1;
+            const duration = document.getElementById('rent-duration').value;
+            const dateVal = document.getElementById('rent-date').value;
+            const timeVal = document.getElementById('rent-time').value;
+            const guarantee = document.querySelector('input[name="guarantee"]:checked').value;
+            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+            const totalPrice = calculatePrice();
+
+            // Collect additional renter names if qty > 1
+            let extraNames = [];
+            if (qty > 1) {
+                for (let i = 2; i <= qty; i++) {
+                    const extraVal = document.getElementById(`extra-renter-${i}`)?.value;
+                    if (extraVal) extraNames.push(extraVal);
+                }
+            }
+
+            // Generate unique booking code
+            const randomCode = 'CH-' + Math.floor(10000 + Math.random() * 90000);
+
+            // Construct Scheduled Target Date/Time
+            const startDateTime = new Date(`${dateVal}T${timeVal}:00`);
+            scheduledStartTimestamp = startDateTime.getTime();
+
+            // Store duration in seconds
+            if (duration === '30m') rentalDurationSeconds = 1800;
+            else if (duration === '1h') rentalDurationSeconds = 3600;
+            else if (duration === '2h') rentalDurationSeconds = 7200;
+            else if (duration === '3h') rentalDurationSeconds = 10800;
+            else if (duration === '4h') rentalDurationSeconds = 14400;
+
+            // Save booking state
+            currentBookingData = {
+                code: randomCode,
+                name: name,
+                extraNames: extraNames,
+                type: type,
+                qty: qty,
+                duration: duration,
+                schedule: startDateTime,
+                totalPrice: totalPrice,
+                guarantee: guarantee,
+                paymentMethod: paymentMethod
+            };
+
+            // Update Success Card UI
+            document.getElementById('res-booking-code').innerText = randomCode;
+            document.getElementById('res-cust-name').innerText = name;
+            
+            if (extraNames.length > 0) {
+                document.getElementById('res-other-renters-row').classList.remove('hidden');
+                document.getElementById('res-other-renters').innerText = extraNames.join(', ');
+            } else {
+                document.getElementById('res-other-renters-row').classList.add('hidden');
+            }
+
+            document.getElementById('res-bike-type').innerText = type.toUpperCase();
+            document.getElementById('res-qty').innerText = qty;
+            document.getElementById('res-schedule').innerText = `${dateVal} @ ${timeVal} WIB`;
+            document.getElementById('res-duration').innerText = duration;
+            document.getElementById('res-payment-method').innerText = paymentMethod;
+
+            // Payment View Toggle
+            const qrisBox = document.getElementById('res-qris-container');
+            const cashBox = document.getElementById('res-cash-container');
+
+            if (paymentMethod === 'qris') {
+                qrisBox.classList.remove('hidden');
+                cashBox.classList.add('hidden');
+                document.getElementById('res-qris-amount').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+            } else {
+                cashBox.classList.remove('hidden');
+                qrisBox.classList.add('hidden');
+                document.getElementById('res-cash-amount').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+                document.getElementById('res-cash-code-inline').innerText = randomCode;
+            }
+
+            document.getElementById('booking-success-card').classList.remove('hidden');
+            document.getElementById('booking-success-card').scrollIntoView({ behavior: 'smooth' });
+
+            // Update active timer UI headers
+            document.getElementById('active-timer-code').innerText = randomCode;
+            document.getElementById('timer-scheduled-time-display').innerText = `${startDateTime.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric'})}, Jam ${timeVal} WIB`;
+
+            // Start time monitoring logic
+            initTimerLogic();
+        }
+
+        function copyBookingCode() {
+            const code = document.getElementById('res-booking-code').innerText;
+            navigator.clipboard ? navigator.clipboard.writeText(code) : alert(`Kode Booking: ${code}`);
+            alert('Kode Booking berhasil disalin!');
+        }
+
+        function checkAndSetupTimerFromBooking() {
+            navigateTo('status-gps');
+        }
+
+        // TIMER LOGIC WITH SCHEDULED DATE & TIME CHECK
+        function initTimerLogic() {
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+
+            activeTimerInterval = setInterval(() => {
+                const now = new Date().getTime();
+
+                if (scheduledStartTimestamp && now < scheduledStartTimestamp) {
+                    // BEFORE SCHEDULED TIME -> Waiting mode (Count down to start time)
+                    const diffToStart = Math.floor((scheduledStartTimestamp - now) / 1000);
+                    
+                    const hrs = Math.floor(diffToStart / 3600);
+                    const mins = Math.floor((diffToStart % 3600) / 60);
+                    const secs = diffToStart % 60;
+
+                    const formattedCountdown = 
+                        String(hrs).padStart(2, '0') + ':' +
+                        String(mins).padStart(2, '0') + ':' +
+                        String(secs).padStart(2, '0');
+
+                    document.getElementById('timer-status-badge').innerText = 'MENUNGGU WAKTU SEWA';
+                    document.getElementById('timer-status-badge').className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+                    document.getElementById('timer-box-label').innerText = 'MULAI DALAM (HITUNG MUNDUR JADWAL)';
+                    document.getElementById('timer-display').innerText = formattedCountdown;
+                    document.getElementById('timer-sub-text').innerText = 'Sepeda siap diambil saat hitung mundur jadwal selesai.';
+                    document.getElementById('timer-warning-msg').classList.add('hidden');
+
+                } else {
+                    // AT OR AFTER SCHEDULED TIME -> Active Rental Duration Countdown
+                    if (scheduledStartTimestamp) {
+                        const elapsedSinceStart = Math.floor((now - scheduledStartTimestamp) / 1000);
+                        let remainingDuration = rentalDurationSeconds - elapsedSinceStart;
+
+                        if (remainingDuration > 0) {
+                            const hrs = Math.floor(remainingDuration / 3600);
+                            const mins = Math.floor((remainingDuration % 3600) / 60);
+                            const secs = remainingDuration % 60;
+
+                            const formatted = 
+                                String(hrs).padStart(2, '0') + ':' +
+                                String(mins).padStart(2, '0') + ':' +
+                                String(secs).padStart(2, '0');
+
+                            document.getElementById('timer-status-badge').innerText = 'AKTIF BERJALAN';
+                            document.getElementById('timer-status-badge').className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+                            document.getElementById('timer-box-label').innerText = 'SISA WAKTU PENYEWAAN';
+                            document.getElementById('timer-display').innerText = formatted;
+                            document.getElementById('timer-sub-text').innerText = 'Masa sewa sedang berlangsung.';
+
+                            if (remainingDuration < 600) {
+                                document.getElementById('timer-warning-msg').classList.remove('hidden');
+                            } else {
+                                document.getElementById('timer-warning-msg').classList.add('hidden');
+                            }
+                        } else {
+                            // RENTAL TIME EXPIRED
+                            document.getElementById('timer-status-badge').innerText = 'SELESAI / WAKTU HABIS';
+                            document.getElementById('timer-status-badge').className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800';
+                            document.getElementById('timer-box-label').innerText = 'SISA WAKTU PENYEWAAN';
+                            document.getElementById('timer-display').innerText = '00:00:00';
+                            document.getElementById('timer-sub-text').innerText = 'Waktu sewa telah berakhir. Kembalikan sepeda ke pos Garuda UNNES.';
+                            document.getElementById('timer-warning-msg').classList.add('hidden');
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function forceStartTimerNow() {
+            scheduledStartTimestamp = new Date().getTime(); // Set start time to right now
+            initTimerLogic();
+            alert('Timer sewa berhasil disimulasikan untuk MULAI SEKARANG!');
+        }
+
+        function addExtraTime(mins) {
+            rentalDurationSeconds += mins * 60;
+            initTimerLogic();
+        }
+
+        function resetTimerSimulation() {
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            scheduledStartTimestamp = null;
+            document.getElementById('timer-status-badge').innerText = 'MENUNGGU WAKTU SEWA';
+            document.getElementById('timer-status-badge').className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+            document.getElementById('timer-box-label').innerText = 'STATUS PENYEWAAN';
+            document.getElementById('timer-display').innerText = '00:00:00';
+            document.getElementById('timer-warning-msg').classList.add('hidden');
+            alert('Timer berhasil di-reset.');
+        }
+
+        // LEAFLET GPS MAP SIMULATION
+        function initLeafletMap() {
+            leafletMap = L.map('leaflet-map').setView(currentBikeCoords, 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap & Cycle Hub UNNES'
+            }).addTo(leafletMap);
+
+            bikeMarker = L.marker(currentBikeCoords).addTo(leafletMap)
+                .bindPopup('<b>Sepeda Cycle Hub (GPS Active)</b><br>Kawasan UNNES')
+                .openPopup();
+        }
+
+        function simulateGPSMove() {
+            const latOffset = (Math.random() - 0.5) * 0.003;
+            const lngOffset = (Math.random() - 0.5) * 0.003;
+
+            currentBikeCoords[0] += latOffset;
+            currentBikeCoords[1] += lngOffset;
+
+            bikeMarker.setLatLng(currentBikeCoords);
+            leafletMap.panTo(currentBikeCoords);
+
+            document.getElementById('gps-coords-display').innerText = 
+                currentBikeCoords[0].toFixed(5) + ', ' + currentBikeCoords[1].toFixed(5);
+        }
+
+        // REVIEWS SUBMIT HANDLER
+        function handleReviewSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('rev-name').value;
+            const rating = parseInt(document.getElementById('rev-rating').value);
+            const comment = document.getElementById('rev-comment').value;
+
+            const stars = '⭐'.repeat(rating);
+            const container = document.getElementById('reviews-container');
+
+            const newRevHtml = `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800 text-sm">${name}</span>
+                        <span class="text-amber-400 text-xs">${stars}</span>
+                    </div>
+                    <p class="text-xs text-slate-600">"${comment}"</p>
+                    <span class="text-[10px] text-slate-400">Baru saja</span>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('afterbegin', newRevHtml);
+            document.getElementById('review-form').reset();
+
+            const countEl = document.getElementById('review-count');
+            countEl.innerText = parseInt(countEl.innerText) + 1;
+        }
+
+        // STAFF DASHBOARD TAB SWITCHING
+        function switchStaffTab(role) {
+            document.getElementById('staff-tab-alghi').classList.add('hidden');
+            document.getElementById('staff-tab-maulida').classList.add('hidden');
+            document.getElementById('staff-tab-aura').classList.add('hidden');
+
+            document.getElementById('tab-btn-alghi').className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+            document.getElementById('tab-btn-maulida').className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+            document.getElementById('tab-btn-aura').className = "px-4 py-2 rounded-lg transition text-slate-400 hover:text-white";
+
+            document.getElementById(`staff-tab-${role}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${role}`).className = "px-4 py-2 rounded-lg transition bg-brand-600 text-white font-bold";
+        }
+
+        function verifyBookingCode() {
+            const code = document.getElementById('verify-code-input').value;
+            if (!code) {
+                alert('Silakan masukkan Kode Booking!');
+                return;
+            }
+            alert(`Kode Booking [${code}] terverifikasi VALID. Siap serah terima sepeda & jaminan identitas.`);
+        }
+
+        function calculatePenalty() {
+            const mins = parseInt(document.getElementById('late-minutes-input').value) || 0;
+            let penalty = 0;
+
+            if (mins > 10) {
+                const extra = mins - 10;
+                const multiplier = Math.ceil(extra / 10);
+                penalty = multiplier * 4000;
+            }
+
+            document.getElementById('penalty-result').innerText = `Rp ${penalty.toLocaleString('id-ID')}`;
+        }
+
+        // LIVE CHAT WIDGET LOGIC
+        function toggleChatWindow() {
+            document.getElementById('chat-window').classList.toggle('hidden');
+        }
+
+        function handleSendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+
+            const userBubble = `
+                <div class="bg-brand-600 text-white p-3 rounded-2xl rounded-tr-none text-xs ml-auto max-w-[85%] shadow-sm">
+                    ${msg}
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', userBubble);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(() => {
+                const auraReplies = [
+                    "Terima kasih sudah menghubungi Cycle Hub! Petugas kami di Garuda UNNES siap membantu.",
+                    "Pesan Anda diterima. Untuk pembayaran QRIS atau Cash dapat dikonfirmasi langsung di lokasi ya.",
+                    "Baik, tim operasional (Alghi) sedang mengecek unit tersebut."
+                ];
+                const reply = auraReplies[Math.floor(Math.random() * auraReplies.length)];
+
+                const auraBubble = `
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-200 text-slate-700 max-w-[85%] shadow-sm">
+                        ${reply}
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', auraBubble);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
